@@ -1,21 +1,18 @@
 from rest_framework import serializers
 from .models import Post
 from .models import SignUpForm
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 class PostSerializer(serializers.ModelSerializer):
+    time_ago = serializers.SerializerMethodField()
+    
     class Meta:
         model = Post
-        fields = ['id', 'username', 'created_datetime', 'title', 'content']
-        read_only_fields = ['created_datetime']  # created_datetime should not be writable
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'created_datetime': {'read_only': True},
-            'username': {'required': True},
-        }
+        fields = ['id', 'username', 'created_datetime', 'title', 'content', 'time_ago']
+        read_only_fields = ['id', 'created_datetime', 'time_ago']
 
-    def create(self, validated_data):
-        return Post.objects.create(**validated_data)
-
+    def get_time_ago(self, obj):
+        return naturaltime(obj.created_datetime)
 
 class SignUpFormSerializer(serializers.ModelSerializer):
     class Meta:

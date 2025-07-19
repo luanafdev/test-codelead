@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import api from '../api';
 
 const AppContainer = styled.div`
   max-width: 650px;
@@ -138,6 +139,7 @@ const PostContent = styled.div`
 `;
 
 function App() {
+    
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [posts, setPosts] = useState([
@@ -156,6 +158,21 @@ function App() {
       content: "Curabitur suscipit suscipit tellus. Phasellus consectetuer vestibulum elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maeceana egestas arcu quis ligula mattis placerat. Duis vel nibh at velit scelerisque suscipit.\n\nDuis lobortis massa imperdiet quam. Aenean poquere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Fusce a quam. Nullam vel sem."
     }
   ]);
+
+    
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const response = await api.get('/posts/');
+                setPosts(response.data);
+            } catch (error) {
+                console.error('Error fetching posts:', error);
+                throw error;
+            }
+        };
+        fetchPosts()
+    }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -224,8 +241,8 @@ function App() {
                     </PostHeader>
                     <PostContent>
                         <PostMeta>
-                            <span className="author">{post.author}</span>
-                            <span className="time">{post.time}</span>
+                            <span className="author">{post.username!}</span>
+                            <span className="time">{post.time_ago}</span>
                         </PostMeta>
                         {post.content.split('\n').map((paragraph, i) => (
                         <p key={i}>{paragraph}</p>
