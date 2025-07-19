@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import api from '../api';
+import axios from 'axios';
 
 const AppContainer = styled.div`
   max-width: 650px;
@@ -139,122 +140,124 @@ const PostContent = styled.div`
 `;
 
 function App() {
-    
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "My First Post at CodeLeap Network!",
-      author: "@Victor",
-      time: "25 minutes ago",
-      content: "Curabitur suscipit suscipit tellus. Phasellus consectetuer vestibulum elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maeceana egestas arcu quis ligula mattis placerat. Duis vel nibh at velit scelerisque suscipit.\n\nDuis lobortis massa imperdiet quam. Aenean poquere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Fusce a quam. Nullam vel sem. Nullam cursus tacinia erat."
-    },
-    {
-      id: 2,
-      title: "My Second Post at CodeLeap Network!",
-      author: "@Vini",
-      time: "45 minutes ago",
-      content: "Curabitur suscipit suscipit tellus. Phasellus consectetuer vestibulum elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maeceana egestas arcu quis ligula mattis placerat. Duis vel nibh at velit scelerisque suscipit.\n\nDuis lobortis massa imperdiet quam. Aenean poquere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Fusce a quam. Nullam vel sem."
-    }
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-    
-
-    useEffect(() => {
-        const fetchPosts = async () => {
-            try {
-                const response = await api.get('/posts/');
-                setPosts(response.data);
-            } catch (error) {
-                console.error('Error fetching posts:', error);
-                throw error;
-            }
-        };
-        fetchPosts()
-    }, [])
-
-  const handleSubmit = (e) => {
+  const createPost = async (e) => {
     e.preventDefault();
-    const newPost = {
-      id: posts.length + 1,
-      title: title,
-      author: "@You",
-      time: "Just now",
-      content: content
-    };
-    setPosts([newPost, ...posts]);
-    setTitle('');
-    setContent('');
+    
+    if (!title.trim() || !content.trim()) return;
+    
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/posts/create/', {
+        title,
+        content,
+        username: localStorage.getItem('username') || 'anonymous'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      // Atualiza a lista de posts com o novo post vindo da API
+      setPosts([response.data, ...posts]);
+      setTitle('');
+      setContent('');
+    } catch (error) {
+      console.error('Erro ao criar post:', error.response?.data);
+      setError(error.response?.data?.message || 'Failed to create post');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await api.get('/posts/');
+        setPosts(response.data);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        setError('Failed to load posts');
+      }
+    };
+    fetchPosts();
+  }, []);
 
   const isFormValid = title.trim() !== '' && content.trim() !== '';
 
   return (
-    <>
+    <div style={{ backgroundColor: '#DDDDDD', margin: 0, padding: 0 }}>
+      <AppContainer>  
+        <Header>
+          <h1>CodeLeap Network</h1>
+        </Header>
         
-        <body style={{ backgroundColor: '#DDDDDD', margin: 0, padding: 0 }}>
-            
-        <AppContainer>  
-            <Header>
-                <h1>CodeLeap Network</h1>
-            </Header>
-            <MainContent>
-                <CreatePostSection>
-                <h2>What's on your mind?</h2>
-                <form onSubmit={handleSubmit}>
-                    <FormGroup>
-                    <label>Title</label>
-                    <input
-                        type="text"
-                        placeholder="Hello world"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                    />
-                    </FormGroup>
-                    
-                    <FormGroup>
-                    <label>Content</label>
-                    <textarea
-                        placeholder="Content here"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                    ></textarea>
-                    </FormGroup>
-                    
-                    <FormActions>
-                    <Button
-                        type="submit"
-                        disabled={!isFormValid}
-                    >
-                        Create
-                    </Button>
-                    </FormActions>
-                </form>
-                </CreatePostSection>
-                
-                <PostsList>
-                {posts.map(post => (
-                    <Post key={post.id}>
-                    <PostHeader>
-                        <h3>{post.title}</h3>
-                    </PostHeader>
-                    <PostContent>
-                        <PostMeta>
-                            <span className="author">{post.username!}</span>
-                            <span className="time">{post.time_ago}</span>
-                        </PostMeta>
-                        {post.content.split('\n').map((paragraph, i) => (
-                        <p key={i}>{paragraph}</p>
-                        ))}
-                    </PostContent>
-                    </Post>
-                ))}
-                </PostsList>
+        <MainContent>
+          <CreatePostSection>
+            <h2>What's on your mind?</h2>
+            <form onSubmit={createPost}>
+              <FormGroup>
+                <label>Title</label>
+                <input
+                  type="text"
+                  placeholder="Hello world"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Content</label>
+                <textarea
+                  placeholder="Content here"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  disabled={isSubmitting}
+                ></textarea>
+              </FormGroup>
+              
+              {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+              
+              <FormActions>
+                <Button
+                  type="submit"
+                  disabled={!isFormValid || isSubmitting}
+                >
+                  {isSubmitting ? 'Creating...' : 'Create'}
+                </Button>
+              </FormActions>
+            </form>
+          </CreatePostSection>
+          
+          <PostsList>
+            {posts.map(post => (
+              <Post key={post.id}>
+                <PostHeader>
+                  <h3>{post.title}</h3>
+                </PostHeader>
+                <PostContent>
+                  <PostMeta>
+                    <span className="author">@{post.username}</span>
+                    <span className="time">{post.time_ago || 'just now'}</span>
+                  </PostMeta>
+                  {post.content.split('\n').map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
+                </PostContent>
+              </Post>
+            ))}
+          </PostsList>
         </MainContent>
-        </AppContainer>
-        </body>
-    </>
+      </AppContainer>
+    </div>
   );
 }
 

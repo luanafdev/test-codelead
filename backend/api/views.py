@@ -19,8 +19,10 @@ class PostListView(APIView):
         return Response(serializer.data)
     permission_classes = [AllowAny]
 
-# Create your views here.
-class CreatePostView(generics.CreateAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = [AllowAny]
+class PostCreateView(APIView):
+    def post(self, request):
+        serializer = PostSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
