@@ -143,11 +143,215 @@ const PostContent = styled.div`
 `;
 
 function App() {
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [posts, setPosts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  const DeleteModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        padding: '24px',
+        borderRadius: '16px',
+        width: '500px'
+      }}>
+        <h2 style={{ marginTop: 0 }}>Are you sure you want to delete this item?</h2>
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '16px',
+          marginTop: '24px'
+        }}>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: '1px solid #999',
+              borderRadius: '8px',
+              padding: '8px 32px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            style={{
+              background: '#FF5151',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 32px',
+              cursor: 'pointer'
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+    const EditModal = ({ isOpen, onClose, post, onSave }) => {
+  const [title, setTitle] = useState(post?.title || '');
+  const [content, setContent] = useState(post?.content || '');
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        padding: '24px',
+        borderRadius: '16px',
+        width: '500px'
+      }}>
+        <h2 style={{ marginTop: 0 }}>Edit item</h2>
+        
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ddd',
+              borderRadius: '8px'
+            }}
+          />
+        </div>
+        
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Content</label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            style={{
+              width: '100%',
+              minHeight: '100px',
+              padding: '8px',
+              border: '1px solid #ddd',
+              borderRadius: '8px'
+            }}
+          />
+        </div>
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '16px'
+        }}>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: '1px solid #999',
+              borderRadius: '8px',
+              padding: '8px 32px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={() => onSave({ title, content })}
+            disabled={!title.trim() || !content.trim()}
+            style={{
+              background: '#7695EC',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 32px',
+              cursor: 'pointer',
+              opacity: (!title.trim() || !content.trim()) ? 0.5 : 1
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const handleDeleteClick = (post) => {
+  setPostToDelete(post);
+  setDeleteModalOpen(true);
+};
+
+const handleEditClick = (post) => {
+  setPostToEdit(post);
+  setEditModalOpen(true);
+};
+
+const confirmDelete = async () => {
+  try {
+    await axios.delete(`/api/posts/${postToDelete.id}/`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      }
+    });
+    setPosts(posts.filter(post => post.id !== postToDelete.id));
+    setDeleteModalOpen(false);
+  } catch (error) {
+    console.error('Error deleting post:', error);
+  }
+};
+
+const saveEdit = async (updatedData) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:8000/api/posts/${postToEdit.id}/`,
+      updatedData,
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      }
+    );
+    
+    setPosts(posts.map(post => 
+      post.id === postToEdit.id ? response.data : post
+    ));
+    setEditModalOpen(false);
+  } catch (error) {
+    console.error('Error updating post:', error);
+  }
+};
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState(null);
+    const [postToEdit, setPostToEdit] = useState(null);
 
   const createPost = async (e) => {
     e.preventDefault();
@@ -197,6 +401,20 @@ function App() {
 
   return (
     <div style={{ backgroundColor: '#DDDDDD', margin: 0, padding: 0 }}>
+        <DeleteModal
+      isOpen={deleteModalOpen}
+      onClose={() => setDeleteModalOpen(false)}
+      onConfirm={confirmDelete}
+      postTitle={postToDelete?.title}
+    />
+    
+    <EditModal
+      isOpen={editModalOpen}
+      onClose={() => setEditModalOpen(false)}
+      post={postToEdit}
+      onSave={saveEdit}
+    />
+
       <AppContainer>  
         <Header>
           <h1>CodeLeap Network</h1>
@@ -248,10 +466,16 @@ function App() {
                   <>
                     {post.username == localStorage.getItem('username') && (
                         
-                        <>
-                        <BsTrash style={{marginRight: "-400px", fontSize: "23px", color: "white"}} />
-                        <FaEdit style={{marginRight: "10px", fontSize: "23px", color: "white"}} />
-                        </>
+                       <div style={{ display: 'flex', gap: '16px', marginRight: '16px' }}>
+                            <BsTrash 
+                                onClick={() => handleDeleteClick(post)}
+                                style={{ cursor: 'pointer', fontSize: "20px", color: "white" }} 
+                            />
+                            <FaEdit 
+                                onClick={() => handleEditClick(post)}
+                                style={{ cursor: 'pointer', fontSize: "20px", color: "white" }} 
+                            />
+                        </div>
                     )}
                   </>
                 </PostHeader>
