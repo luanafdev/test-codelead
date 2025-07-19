@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import api from '../api';
 import axios from 'axios';
+import { BsTrash } from "react-icons/bs";
+import { FaEdit } from "react-icons/fa";
 
 const AppContainer = styled.div`
   max-width: 650px;
@@ -106,6 +108,7 @@ const PostHeader = styled.div`
   height: 55px;
   align-items: center;
     display: flex;
+    justify-content: space-between;
 
   h3 {
     margin: 0;
@@ -242,6 +245,15 @@ function App() {
               <Post key={post.id}>
                 <PostHeader>
                   <h3>{post.title}</h3>
+                  <>
+                    {post.username == localStorage.getItem('username') && (
+                        
+                        <>
+                        <BsTrash style={{marginRight: "-400px", fontSize: "23px", color: "white"}} />
+                        <FaEdit style={{marginRight: "10px", fontSize: "23px", color: "white"}} />
+                        </>
+                    )}
+                  </>
                 </PostHeader>
                 <PostContent>
                   <PostMeta>
