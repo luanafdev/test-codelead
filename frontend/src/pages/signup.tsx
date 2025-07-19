@@ -95,7 +95,7 @@ const styles = {
   button: {
     marginTop: '12px',
     padding: '8px',
-    fontWeight: '700px',
+    fontWeight: '700',
     color: 'white',
     backgroundColor: '#7695EC',
     border: 'none',
