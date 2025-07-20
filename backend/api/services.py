@@ -33,3 +33,12 @@ class CodeLeapAPIService:
         except RequestException as e:
             print(f"Error deleting post: {e}")
             return False
+
+    @classmethod
+    def edit_post(cls, post_id):
+        try:
+            response = requests.edit(f"{cls.BASE_URL}{post_id}/")
+            return response.status_code == 204
+        except RequestException as e:
+            print(f"Error editing post: {e}")
+            return False

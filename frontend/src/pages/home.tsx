@@ -312,7 +312,7 @@ function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
   const [postToEdit, setPostToEdit] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
 
    // Busca os posts apenas uma vez (quando o componente é montado)
@@ -378,7 +378,7 @@ function App() {
    */
   const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/posts/${postToDelete.id}/`, {
+      await axios.delete(`http://localhost:8000/api/posts/${postToDelete.id}/delete/`, {
       
       });
       setPosts(posts.filter(post => post.id !== postToDelete.id));
@@ -394,7 +394,7 @@ function App() {
   const saveEdit = async (updatedData) => {
     try {
       const response = await axios.put(
-        `http://localhost:8000/api/posts/${postToEdit.id}/`,
+        `http://localhost:8000/api/posts/${postToEdit.id}/edit`,
         updatedData,
       );
       
@@ -410,16 +410,10 @@ function App() {
 
   // Verifica se o formulário está válido
   const isFormValid = title.trim() !== '' && content.trim() !== '';
-
   return (
     <div style={{ backgroundColor: '#DDDDDD', margin: 0, padding: 0 }}>
       {/* Modais */}
-      <DeleteModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        postTitle={postToDelete?.title}
-      />
+      
       
       <EditModal
         isOpen={editModalOpen}
@@ -427,7 +421,12 @@ function App() {
         post={postToEdit}
         onSave={saveEdit}
       />
-
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        postTitle={postToDelete?.title}
+      />
       {/* Conteúdo principal */}
       <AppContainer>  
         <Header>
@@ -497,7 +496,7 @@ function App() {
                 <PostContent>
                   <PostMeta>
                     <span className="author">@{post.username}</span>
-                    <span className="time">{post.time_ago || 'just now'}</span>
+                    <span className="time">{post.time_ago}</span>
                   </PostMeta>
                   {post.content.split('\n').map((paragraph, i) => (
                     <p key={i}>{paragraph}</p>

@@ -37,3 +37,13 @@ class PostDeleteView(APIView):
             {"error": "Failed to delete post"},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+class PostEditView(APIView):
+    def Edit(self, request, pk):
+        success = CodeLeapAPIService.edit_post(pk)
+        if success:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"error": "Failed to delete post"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
