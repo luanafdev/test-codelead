@@ -1,28 +1,39 @@
-from django.shortcuts import render
-from rest_framework import generics
-from .serializers import PostSerializer
-from rest_framework.permissions import AllowAny
-from rest_framework import viewsets
-from .models import Post
-from rest_framework.routers import DefaultRouter
-import requests
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from rest_framework.response import Response
+from rest_framework import status
+from .services import CodeLeapAPIService
 
 class PostListView(APIView):
     def get(self, request):
-        posts = Post.objects.all().order_by('-created_datetime')  # Mais recentes primeiro
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
-    permission_classes = [AllowAny]
+        posts = CodeLeapAPIService.get_posts()
+        if posts is not None:
+            return Response(posts['results'], status=status.HTTP_200_OK)
+        return Response(
+            {"error": "Failed to fetch posts from CodeLeap API"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 
 class PostCreateView(APIView):
     def post(self, request):
-        serializer = PostSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+        data = {
+            "username": request.data.get("username"),
+            "title": request.data.get("title"),
+            "content": request.data.get("content")
+        }
+        result = CodeLeapAPIService.create_post(data)
+        if result:
+            return Response(result, status=status.HTTP_201_CREATED)
+        return Response(
+            {"error": "Failed to create post"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class PostDeleteView(APIView):
+    def delete(self, request, pk):
+        success = CodeLeapAPIService.delete_post(pk)
+        if success:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"error": "Failed to delete post"},
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -21,6 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):        
         return Post.objects.create(**validated_data)
+        
 
 class SignUpFormSerializer(serializers.ModelSerializer):
     class Meta:

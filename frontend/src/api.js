@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/',  // URL do seu backend Django
+  baseURL: 'https://dev.codeleap.co.uk/careers/',  // URL do seu backend Django
 });
 
 export default api;
