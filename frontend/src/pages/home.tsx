@@ -225,7 +225,45 @@ const EditModal = ({ isOpen, onClose, post, onSave }) => {
 
   const modalStyles = {
     // Reutiliza os mesmos estilos do DeleteModal
-    ...DeleteModal.modalStyles,
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    },
+    content: {
+      backgroundColor: 'white',
+      padding: '24px',
+      borderRadius: '16px',
+      width: '500px'
+    },
+    actions: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '16px',
+      marginTop: '24px'
+    },
+    cancelButton: {
+      background: 'transparent',
+      border: '1px solid #999',
+      borderRadius: '8px',
+      padding: '8px 32px',
+      cursor: 'pointer'
+    },
+    deleteButton: {
+      background: '#FF5151',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '8px 32px',
+      cursor: 'pointer'
+    },
     inputGroup: {
       marginBottom: '16px'
     },
@@ -247,7 +285,6 @@ const EditModal = ({ isOpen, onClose, post, onSave }) => {
       borderRadius: '8px',
       padding: '8px 32px',
       cursor: 'pointer',
-      opacity: (!title.trim() || !content.trim()) ? 0.5 : 1
     }
   };
 
@@ -260,7 +297,7 @@ const EditModal = ({ isOpen, onClose, post, onSave }) => {
           <label style={modalStyles.label}>Title</label>
           <input
             type="text"
-            value={title}
+            defaultValue={post?.title}
             onChange={(e) => setTitle(e.target.value)}
             style={modalStyles.input}
           />
@@ -269,7 +306,7 @@ const EditModal = ({ isOpen, onClose, post, onSave }) => {
         <div style={{ ...modalStyles.inputGroup, marginBottom: '24px' }}>
           <label style={modalStyles.label}>Content</label>
           <textarea
-            value={content}
+            defaultValue={post?.content}
             onChange={(e) => setContent(e.target.value)}
             style={{ ...modalStyles.input, minHeight: '100px' }}
           />
@@ -280,8 +317,10 @@ const EditModal = ({ isOpen, onClose, post, onSave }) => {
             Cancel
           </button>
           <button 
-            onClick={() => onSave({ title, content })}
-            disabled={!title.trim() || !content.trim()}
+            onClick={() => onSave({ 
+              title: title !== post.title ? title : undefined,
+              content: content !== post.content ? content : undefined
+            })}
             style={modalStyles.saveButton}
           >
             Save
@@ -388,24 +427,32 @@ function App() {
     }
   };
 
-  /**
-   * Função para salvar as edições de um post
-   */
-  const saveEdit = async (updatedData) => {
-    try {
-      const response = await axios.put(
-        `http://localhost:8000/api/posts/${postToEdit.id}/edit`,
-        updatedData,
-      );
-      
-      setPosts(posts.map(post => 
-        post.id === postToEdit.id ? response.data : post
-      ));
-      setEditModalOpen(false);
-    } catch (error) {
-      console.error('Error updating post:', error);
-    }
-  };
+ /**
+ * Função para salvar as edições de um post
+ */
+const saveEdit = async (updatedData) => {
+  try {
+    // Cria o objeto com os dados a serem enviados
+    const dataToSend = {
+      title: updatedData.title || postToEdit.title, // Usa o novo título ou mantém o original
+      content: updatedData.content || postToEdit.content // Usa o novo conteúdo ou mantém o original
+    };
+
+    const response = await axios.patch(
+      `http://localhost:8000/api/posts/${postToEdit.id}/edit/`,
+      dataToSend,
+    );
+    
+    setPosts(posts.map(post => 
+      post.id === postToEdit.id ? response.data : post
+    ));
+    
+    setEditModalOpen(false);
+  } catch (error) {
+    setEditModalOpen(false);
+    console.error('Error updating post:', error);
+  }
+};
 
 
   // Verifica se o formulário está válido

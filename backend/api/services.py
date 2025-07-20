@@ -35,10 +35,20 @@ class CodeLeapAPIService:
             return False
 
     @classmethod
-    def edit_post(cls, post_id):
+    def edit_post(cls, pk, data):
         try:
-            response = requests.edit(f"{cls.BASE_URL}{post_id}/")
+            response = requests.patch(f"{cls.BASE_URL}{pk}/", json=data)
             return response.status_code == 204
         except RequestException as e:
             print(f"Error editing post: {e}")
             return False
+
+    @classmethod
+    def get_post_by_id(cls, pk):
+        try:
+            response = requests.get(f"{cls.BASE_URL}{pk}/")
+            response.raise_for_status()  # Lança exceção para status 4xx/5xx
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Error fetching post {pk}: {e}")
+            return None

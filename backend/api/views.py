@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .services import CodeLeapAPIService
+from .serializers import PostSerializer
 
 class PostListView(APIView):
     def get(self, request):
@@ -39,11 +40,15 @@ class PostDeleteView(APIView):
         )
 
 class PostEditView(APIView):
-    def Edit(self, request, pk):
-        success = CodeLeapAPIService.edit_post(pk)
+    def patch(self, request, pk):
+        data = {
+            "title": request.data.get("title"),
+            "content": request.data.get("content")
+        }
+        success = CodeLeapAPIService.edit_post(pk=pk, data=data)
         if success:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {"error": "Failed to delete post"},
+            {"error": "Failed to edit post"},
             status=status.HTTP_400_BAD_REQUEST
         )
